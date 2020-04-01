@@ -14,26 +14,27 @@ const webpack = require('webpack');
 const resolve = require('resolve');
 const PnpWebpackPlugin = require('pnp-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const HtmlWebpackHarddiskPlugin = require('html-webpack-harddisk-plugin');
 const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
-const InlineChunkHtmlPlugin = require('react-dev-utils/InlineChunkHtmlPlugin');
+const InlineChunkHtmlPlugin = require('laravel-react-dev-utils/InlineChunkHtmlPlugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const safePostCssParser = require('postcss-safe-parser');
 const ManifestPlugin = require('webpack-manifest-plugin');
-const InterpolateHtmlPlugin = require('react-dev-utils/InterpolateHtmlPlugin');
+const InterpolateHtmlPlugin = require('laravel-react-dev-utils/InterpolateHtmlPlugin');
 const WorkboxWebpackPlugin = require('workbox-webpack-plugin');
-const WatchMissingNodeModulesPlugin = require('react-dev-utils/WatchMissingNodeModulesPlugin');
-const ModuleScopePlugin = require('react-dev-utils/ModuleScopePlugin');
-const getCSSModuleLocalIdent = require('react-dev-utils/getCSSModuleLocalIdent');
+const WatchMissingNodeModulesPlugin = require('laravel-react-dev-utils/WatchMissingNodeModulesPlugin');
+const ModuleScopePlugin = require('laravel-react-dev-utils/ModuleScopePlugin');
+const getCSSModuleLocalIdent = require('laravel-react-dev-utils/getCSSModuleLocalIdent');
 const paths = require('./paths');
 const modules = require('./modules');
 const getClientEnvironment = require('./env');
-const ModuleNotFoundPlugin = require('react-dev-utils/ModuleNotFoundPlugin');
-const ForkTsCheckerWebpackPlugin = require('react-dev-utils/ForkTsCheckerWebpackPlugin');
-const typescriptFormatter = require('react-dev-utils/typescriptFormatter');
+const ModuleNotFoundPlugin = require('laravel-react-dev-utils/ModuleNotFoundPlugin');
+const ForkTsCheckerWebpackPlugin = require('laravel-react-dev-utils/ForkTsCheckerWebpackPlugin');
+const typescriptFormatter = require('laravel-react-dev-utils/typescriptFormatter');
 // @remove-on-eject-begin
-const getCacheIdentifier = require('react-dev-utils/getCacheIdentifier');
+const getCacheIdentifier = require('laravel-react-dev-utils/getCacheIdentifier');
 // @remove-on-eject-end
 const postcssNormalize = require('postcss-normalize');
 
@@ -50,6 +51,12 @@ const isExtendingEslintConfig = process.env.EXTEND_ESLINT === 'true';
 const imageInlineSizeLimit = parseInt(
   process.env.IMAGE_INLINE_SIZE_LIMIT || '10000'
 );
+
+// integration with backend application
+// write development index html file to specific directory
+const writeHTMLToBackendApplicationDirectory = process.env.BACKEND_HTML_PATH && process.env.BACKEND_HTML_FILENAME ? true : false; 
+const backendHTMLFilename = process.env.BACKEND_HTML_FILENAME;
+const backendHTMLPath = process.env.BACKEND_HTML_PATH;
 
 // Check if TypeScript is setup
 const useTypeScript = fs.existsSync(paths.appTsConfig);
@@ -161,7 +168,7 @@ module.exports = function(webpackEnv) {
       // require.resolve('webpack-dev-server/client') + '?/',
       // require.resolve('webpack/hot/dev-server'),
       isEnvDevelopment &&
-        require.resolve('react-dev-utils/webpackHotDevClient'),
+        require.resolve('laravel-react-dev-utils/webpackHotDevClient'),
       // Finally, this is your app's code:
       paths.appIndexJs,
       // We include the app code last so that if there is a runtime error during
@@ -343,7 +350,7 @@ module.exports = function(webpackEnv) {
             {
               options: {
                 cache: true,
-                formatter: require.resolve('react-dev-utils/eslintFormatter'),
+                formatter: require.resolve('laravel-react-dev-utils/eslintFormatter'),
                 eslintPath: require.resolve('eslint'),
                 resolvePluginsRelativeTo: __dirname,
                 // @remove-on-eject-begin
@@ -403,8 +410,8 @@ module.exports = function(webpackEnv) {
                   [
                     'babel-plugin-named-asset-import',
                     'babel-preset-react-app',
-                    'react-dev-utils',
-                    'react-scripts',
+                    'laravel-react-dev-utils',
+                    'laravel-react-scripts',
                   ]
                 ),
                 // @remove-on-eject-end
@@ -457,8 +464,8 @@ module.exports = function(webpackEnv) {
                   [
                     'babel-plugin-named-asset-import',
                     'babel-preset-react-app',
-                    'react-dev-utils',
-                    'react-scripts',
+                    'laravel-react-dev-utils',
+                    'laravel-react-scripts',
                   ]
                 ),
                 // @remove-on-eject-end
@@ -566,6 +573,12 @@ module.exports = function(webpackEnv) {
             inject: true,
             template: paths.appHtml,
           },
+          writeHTMLToBackendApplicationDirectory
+            ? {
+                alwaysWriteToDisk: true,
+                filename: backendHTMLFilename
+              }
+            : undefined,
           isEnvProduction
             ? {
                 minify: {
@@ -598,6 +611,12 @@ module.exports = function(webpackEnv) {
       new InterpolateHtmlPlugin(HtmlWebpackPlugin, env.raw),
       // This gives some necessary context to module not found errors, such as
       // the requesting resource.
+      // copy the webpack generated HTML file to a backend directory
+      // for integration with backend app if desired
+      writeHTMLToBackendApplicationDirectory &&
+        new HtmlWebpackHarddiskPlugin({
+          outputPath: path.resolve(process.cwd(), backendHTMLPath)
+        }),
       new ModuleNotFoundPlugin(paths.appPath),
       // Makes some environment variables available to the JS code, for example:
       // if (process.env.NODE_ENV === 'production') { ... }. See `./env.js`.

@@ -22,7 +22,7 @@ module.exports = getPublicUrlOrPath;
  * @param {(string|undefined)} envPublicUrl a valid url or pathname
  * @returns {string}
  */
-function getPublicUrlOrPath(isEnvDevelopment, homepage, envPublicUrl) {
+function getPublicUrlOrPath(isEnvDevelopment, homepage, envPublicUrl, backendIntegrationRequiresPublicUrl) {
   const stubDomain = 'https://create-react-app.dev';
 
   if (envPublicUrl) {
@@ -38,10 +38,10 @@ function getPublicUrlOrPath(isEnvDevelopment, homepage, envPublicUrl) {
     return isEnvDevelopment
       ? envPublicUrl.startsWith('.')
         ? '/'
-        : validPublicUrl.pathname
+        : backendIntegrationRequiresPublicUrl ? envPublicUrl : validPublicUrl.pathname
       : // Some apps do not use client-side routing with pushState.
-        // For these, "homepage" can be set to "." to enable relative asset paths.
-        envPublicUrl;
+      // For these, "homepage" can be set to "." to enable relative asset paths.
+      envPublicUrl;
   }
 
   if (homepage) {
@@ -57,8 +57,8 @@ function getPublicUrlOrPath(isEnvDevelopment, homepage, envPublicUrl) {
       : // Some apps do not use client-side routing with pushState.
       // For these, "homepage" can be set to "." to enable relative asset paths.
       homepage.startsWith('.')
-      ? homepage
-      : validHomepagePathname;
+        ? homepage
+        : validHomepagePathname;
   }
 
   return '/';

@@ -1,5 +1,5 @@
 {
-  "name": "react-error-overlay",
+  "name": "laravel-react-error-overlay",
   "version": "6.0.6",
   "description": "An overlay for displaying stack frames.",
   "main": "lib/index.js",
